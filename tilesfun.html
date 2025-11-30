@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Gra Memory</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px;
+  background: #f5f5f5;
+}
+h1 { margin-bottom: 20px; }
+#board {
+  display: grid;
+  grid-template-columns: repeat(4, 80px);
+  grid-gap: 10px;
+}
+.card {
+  width: 80px;
+  height: 80px;
+  background: #333;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 32px;
+  cursor: pointer;
+  border-radius: 8px;
+  user-select: none;
+  transition: transform 0.3s;
+}
+.card.flipped {
+  background: #fff;
+  color: #333;
+  transform: rotateY(180deg);
+}
+#stats { margin-top: 20px; }
+button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<h1>Gra Memory</h1>
+<div id="board"></div>
+<div id="stats">
+  <p>Ruchy: <span id="moves">0</span></p>
+  <p>Czas: <span id="timer">0</span> s</p>
+</div>
+<button id="restart">Restart</button>
+
+<script>
+const board = document.getElementById('board');
+const movesElem = document.getElementById('moves');
+const timerElem = document.getElementById('timer');
+const restartBtn = document.getElementById('restart');
+
+let cards = [];
+let flipped = [];
+let matched = 0;
+let moves = 0;
+let time = 0;
+let interval;
+
+function startGame() {
+  cards = [];
+  flipped = [];
+  matched = 0;
+  moves = 0;
+  time = 0;
+  movesElem.textContent = moves;
+  timerElem.textContent = time;
+  clearInterval(interval);
+  interval = setInterval(() => { time++; timerElem.textContent = time; }, 1000);
+
+  const symbols = ['🍎','🍌','🍇','🍓','🍒','🥝','🍍','🥑'];
+  const deck = symbols.concat(symbols);
+  deck.sort(() => Math.random() - 0.5);
+
+  board.innerHTML = '';
+  deck.forEach((symbol, index) => {
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.dataset.symbol = symbol;
+    card.addEventListener('click', flipCard);
+    board.appendChild(card);
+    cards.push(card);
+  });
+}
+
+function flipCard() {
+  if (flipped.length >= 2 || this.classList.contains('flipped')) return;
+  this.classList.add('flipped');
+  this.textContent = this.dataset.symbol;
+  flipped.push(this);
+
+  if (flipped.length === 2) {
+    moves++;
+    movesElem.textContent = moves;
+    checkMatch();
+  }
+}
+
+function checkMatch() {
+  const [card1, card2] = flipped;
+  if (card1.dataset.symbol === card2.dataset.symbol) {
+    matched += 2;
+    flipped = [];
+    if (matched === cards.length) {
+      clearInterval(interval);
+      setTimeout(() => alert(`Gratulacje! Ukończyłeś grę w ${moves} ruchach w ${time} sekund!`), 200);
+    }
+  } else {
+    setTimeout(() => {
+      card1.classList.remove('flipped');
+      card2.classList.remove('flipped');
+      card1.textContent = '';
+      card2.textContent = '';
+      flipped = [];
+    }, 800);
+  }
+}
+
+restartBtn.addEventListener('click', startGame);
+
+startGame();
+</script>
+
+</body>
+</html>
