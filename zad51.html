@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zadanie: Samochody + Nazwy</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .wrapper {
+            max-width: 800px;
+            width: 100%;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 { margin-top: 0; color: #444; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input { padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button {
+            padding: 10px 15px;
+            margin: 5px 5px 0 0;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+        button.green { background-color: #28a745; }
+        .console {
+            background: #222;
+            color: #0f0;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            border-radius: 4px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        #infoAuto { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+    <div class="box">
+        <h2>Tworzenie Auta</h2>
+        <label>Nazwa:</label>
+        <input type="text" id="inNazwa" value="Opel Astra">
+        <label>Rok:</label>
+        <input type="number" id="inRok" value="2024">
+        <label>Przebieg:</label>
+        <input type="number" id="inPrzebieg" value="100000">
+        <label>Cena wyjściowa:</label>
+        <input type="number" id="inCena" value="25000">
+        <button onclick="stworzNoweAuto()">Zrób nowe auto</button>
+        
+        <div id="infoAuto">Nie ma jeszcze auta.</div>
+    </div>
+
+    <div class="box">
+        <h2>Opcje</h2>
+        <button onclick="opcjaA()">a) +1000 do ceny wyj.</button>
+        <button onclick="opcjaB()">b) Taniej przez wiek</button>
+        <button onclick="opcjaC()">c) Taniej przez przebieg</button>
+        <br><br>
+        <label>Dla opcji D (aktualizacja):</label>
+        <input type="number" id="updRok" placeholder="Nowy rok" style="width: 48%; display:inline-block;">
+        <input type="number" id="updPrzebieg" placeholder="Nowy przebieg" style="width: 48%; display:inline-block;">
+        <br>
+        <button onclick="opcjaD()">d) Zmień dane i przelicz</button>
+    </div>
+
+    <div class="box">
+        <h2>Tablica Aut</h2>
+        <button class="green" onclick="opcjaE()">e) Dodaj do tablicy (>10k)</button>
+        <button class="green" onclick="opcjaF()">f) Rok +1 wszystkim</button>
+        
+        <table>
+            <thead>
+                <tr><th>Nazwa</th><th>Rok</th><th>Przebieg</th><th>Cena Wyj.</th><th>Cena Końcowa</th></tr>
+            </thead>
+            <tbody id="tabelaBody"></tbody>
+        </table>
+    </div>
+
+    <div class="box">
+        <h2>Logi</h2>
+        <div class="console" id="konsola"></div>
+    </div>
+
+</div>
+
+<script>
+    class Auto {
+        constructor(nazwa, rok, przebieg, cena_wyjsciowa) {
+            this.nazwa = nazwa;
+            this.rok = Number(rok);
+            this.przebieg = Number(przebieg);
+            this.cena_wyjsciowa = Number(cena_wyjsciowa);
+            this.cena_koncowa = this.cena_wyjsciowa;
+            this.przelicz();
+        }
+
+        przelicz() {
+            this.cena_koncowa = this.cena_wyjsciowa;
+            
+            const dzis = new Date().getFullYear();
+            let wiek = dzis - this.rok;
+            if (wiek < 0) wiek = 0;
+            this.cena_koncowa -= (wiek * 1000);
+
+            const iloscSetek = Math.floor(this.przebieg / 100000);
+            this.cena_koncowa -= (iloscSetek * 10000);
+
+            if (this.cena_koncowa < 0) {
+                this.cena_koncowa = 0;
+            }
+        }
+
+        zwiekszCeneWyjsciowa() {
+            this.cena_wyjsciowa += 1000;
+            this.przelicz();
+        }
+
+        aktualizujDane(nowyPrzebieg, nowyRok) {
+            this.przebieg = Number(nowyPrzebieg);
+            this.rok = Number(nowyRok);
+            this.przelicz();
+        }
+    }
+
+    let tablica = [];
+
+    function dopiszDoTablicy(auto) {
+        if (auto.cena_koncowa > 10000) {
+            tablica.push(auto);
+            piszLog(`Dodałem ${auto.nazwa} do tablicy. Cena ${auto.cena_koncowa} jest ok.`);
+            return true;
+        } else {
+            piszLog(`Nie dodaje ${auto.nazwa}. Cena ${auto.cena_koncowa} jest za niska.`);
+            return false;
+        }
+    }
+
+    function zwiekszRok() {
+        piszLog("Odpalam funkcję zmiany roku dla wszystkich...");
+        tablica.forEach(auto => {
+            auto.rok += 1;
+            auto.przelicz(); 
+        });
+    }
+
+    let obecneAuto = null;
+
+    function piszLog(tekst) {
+        const k = document.getElementById('konsola');
+        k.innerText += "> " + tekst + "\n";
+        k.scrollTop = k.scrollHeight;
+    }
+
+    function pokazAuto() {
+        const div = document.getElementById('infoAuto');
+        if (!obecneAuto) {
+            div.innerText = "Nie ma auta.";
+            return;
+        }
+        div.innerHTML = `Autko: <b>${obecneAuto.nazwa}</b>, Rok ${obecneAuto.rok}, Przebieg ${obecneAuto.przebieg}, Cena Wyj: ${obecneAuto.cena_wyjsciowa}, <b>Finalna: ${obecneAuto.cena_koncowa}</b>`;
+    }
+
+    function rysujTabele() {
+        const tbody = document.getElementById('tabelaBody');
+        tbody.innerHTML = '';
+        tablica.forEach(a => {
+            tbody.innerHTML += `<tr>
+                <td>${a.nazwa}</td>
+                <td>${a.rok}</td>
+                <td>${a.przebieg}</td>
+                <td>${a.cena_wyjsciowa}</td>
+                <td><b>${a.cena_koncowa}</b></td>
+            </tr>`;
+        });
+    }
+
+    function stworzNoweAuto() {
+        const n = document.getElementById('inNazwa').value;
+        const r = document.getElementById('inRok').value;
+        const p = document.getElementById('inPrzebieg').value;
+        const c = document.getElementById('inCena').value;
+        obecneAuto = new Auto(n, r, p, c);
+        piszLog(`Zrobilem nowe auto: ${n} (cena: ${c})`);
+        pokazAuto();
+    }
+
+    function opcjaA() {
+        if(!obecneAuto) return alert("Najpierw zrob auto");
+        obecneAuto.zwiekszCeneWyjsciowa();
+        piszLog("Podbiłem cenę wyjściową o tysiaka.");
+        pokazAuto();
+    }
+
+    function opcjaB() {
+        if(!obecneAuto) return alert("Najpierw zrob auto");
+        obecneAuto.przelicz(); 
+        piszLog("Przeliczone.");
+        pokazAuto();
+    }
+
+    function opcjaC() {
+        if(!obecneAuto) return alert("Najpierw zrob auto");
+        obecneAuto.przelicz();
+        piszLog("Przeliczone.");
+        pokazAuto();
+    }
+
+    function opcjaD() {
+        if(!obecneAuto) return alert("Najpierw zrob auto");
+        const r = document.getElementById('updRok').value;
+        const p = document.getElementById('updPrzebieg').value;
+        if(!r || !p) return alert("Wpisz rok i przebieg");
+        obecneAuto.aktualizujDane(p, r);
+        piszLog("Zaktualizowalem dane auta.");
+        pokazAuto();
+    }
+
+    function opcjaE() {
+        if(!obecneAuto) return alert("Najpierw zrob auto");
+        let kopia = new Auto(obecneAuto.nazwa, obecneAuto.rok, obecneAuto.przebieg, obecneAuto.cena_wyjsciowa);
+        dopiszDoTablicy(kopia);
+        rysujTabele();
+    }
+
+    function opcjaF() {
+        zwiekszRok();
+        rysujTabele();
+    }
+
+    window.onload = function() {
+        piszLog("Startuje skrypt...");
+        
+        let a1 = new Auto("Fiat Panda", 2024, 100000, 9000);
+        let a2 = new Auto("Mercedes AMG", 2024, 100000, 21000);
+
+        dopiszDoTablicy(a1);
+        dopiszDoTablicy(a2);
+        
+        zwiekszRok();
+        
+        rysujTabele();
+        console.log(tablica);
+    }
+</script>
+
+</body>
+</html>

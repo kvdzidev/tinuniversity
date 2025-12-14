@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student System</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: rgba(20, 20, 20, 0.6);
+            --border-color: #333;
+            --accent-color: #00f3ff;
+            --text-color: #e0e0e0;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .interface-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--accent-color);
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 15px;
+            height: 15px;
+            border-top: 2px solid var(--accent-color);
+            border-right: 2px solid var(--accent-color);
+        }
+
+        .panel-header {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #444;
+            color: white;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            font-family: var(--font-main);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-bottom-color: var(--accent-color);
+        }
+
+        button {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-family: var(--font-main);
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        button:disabled {
+            border-color: #333;
+            color: #333;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .output-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #aaa;
+        }
+
+        .highlight {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .data-display {
+            margin-top: 10px;
+            padding: 10px;
+            border-left: 2px solid var(--accent-color);
+            background: rgba(0, 243, 255, 0.05);
+        }
+
+        #gradeSection {
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        #gradeSection.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="interface-container">
+        <h1>Student system</h1>
+
+        <div class="panel">
+            <div class="panel-header">Initialization</div>
+            <input type="text" id="inpImie" placeholder="Wprowadź Imię" value="Jan">
+            <input type="text" id="inpNazwisko" placeholder="Wprowadź Nazwisko" value="Kowalski">
+            <button onclick="utworzStudenta()">Zarejestruj Studenta</button>
+        </div>
+
+        <div class="panel" id="gradeSection">
+            <div class="panel-header">Data Processing</div>
+            
+            <div class="output-text" id="helloOutput">Oczekiwanie na dane...</div>
+            
+            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="inpPrzedmiot" placeholder="Przedmiot (np. TIN)">
+                <input type="number" id="inpWartosc" placeholder="Ocena" style="width: 80px;">
+            </div>
+            <button onclick="dodajOcene()">Dodaj Ocenę (Setter)</button>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">Memory Dump (Getter)</div>
+            <div class="data-display" id="getterOutput">
+                brak danych
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Ocena {
+            constructor(przedmiot, wartosc) {
+                this.przedmiot = przedmiot;
+                this.wartosc = Number(wartosc);
+            }
+        }
+
+        class Student {
+            constructor(imie, nazwisko) {
+                this.imie = imie;
+                this.nazwisko = nazwisko;
+                this.tablicaOcen = [];
+                this.sredniaOcen = 0;
+            }
+
+            hello() {
+                return `Witaj ${this.imie} ${this.nazwisko}, Twoja średnia ocen to: ${this.sredniaOcen.toFixed(2)}.`;
+            }
+
+            set oceny(x) {
+                if (x instanceof Ocena) {
+                    this.tablicaOcen.push(x);
+                    
+                    let suma = 0;
+                    this.tablicaOcen.forEach(ocena => {
+                        suma += ocena.wartosc;
+                    });
+                    this.sredniaOcen = suma / this.tablicaOcen.length;
+                } else {
+                    console.error("Przekazany obiekt nie jest klasy Ocena!");
+                }
+            }
+
+            get oceny() {
+                if (this.tablicaOcen.length === 0) {
+                    return "Brak ocen w systemie.";
+                }
+
+                let komunikat = "";
+                this.tablicaOcen.forEach(o => {
+                    komunikat += `Przedmiot: ${o.przedmiot} - ocena ${o.wartosc}. `;
+                });
+                return komunikat;
+            }
+        }
+
+        let aktualnyStudent = null;
+
+        function utworzStudenta() {
+            const imie = document.getElementById('inpImie').value;
+            const nazwisko = document.getElementById('inpNazwisko').value;
+
+            if (!imie || !nazwisko) return alert("Wprowadź dane!");
+
+            aktualnyStudent = new Student(imie, nazwisko);
+
+            document.getElementById('gradeSection').classList.add('active');
+            
+            odswiezWidok();
+        }
+
+        function dodajOcene() {
+            if (!aktualnyStudent) return;
+
+            const przedmiot = document.getElementById('inpPrzedmiot').value;
+            const wartosc = document.getElementById('inpWartosc').value;
+
+            if (!przedmiot || !wartosc) return alert("Wypełnij przedmiot i ocenę!");
+
+            let nowaOcena = new Ocena(przedmiot, wartosc);
+
+            aktualnyStudent.oceny = nowaOcena;
+
+            document.getElementById('inpPrzedmiot').value = '';
+            document.getElementById('inpWartosc').value = '';
+
+            odswiezWidok();
+        }
+
+        function odswiezWidok() {
+            if (!aktualnyStudent) return;
+
+            const helloDiv = document.getElementById('helloOutput');
+            helloDiv.innerHTML = `<span class="highlight">${aktualnyStudent.hello()}</span>`;
+
+            const getterDiv = document.getElementById('getterOutput');
+            getterDiv.innerText = aktualnyStudent.oceny;
+        }
+
+        let s = new Student('Testowy', 'Janusz');
+        console.log("--- TEST Z KONSOLI ---");
+        console.log(s.hello());
+    </script>
+
+</body>
+</html>
